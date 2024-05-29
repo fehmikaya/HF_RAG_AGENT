@@ -32,11 +32,12 @@ remote_llm = CustomLlama3(bearer_token = HF_TOKEN)
 retriever = None
 
 def data_ingestion():
+    global retriever
     docs=[]
-
-    if os.path.exists(DATA_DIR+"/saved_link.txt"):
+    
+    if os.path.exists(os.path.join(DATA_DIR, "saved_link.txt")):
         try:
-            with open(DATA_DIR+"/saved_link.txt", 'r') as file:
+            with open(os.path.join(DATA_DIR, "saved_link.txt"), 'r') as file:
                 url = file.read()
                 web_doc = WebBaseLoader(url).load()
                 if web_doc:
@@ -44,11 +45,14 @@ def data_ingestion():
         except Exception as e:
           print(e)
 
-    if os.path.exists(DATA_DIR+"/saved_pdf.pdf"):
-        pdf_loader = PyPDFLoader(DATA_DIR+"/saved_pdf.pdf")
-        pdf_doc = pdf_loader.load()
-        if pdf_doc:
-          docs.append(pdf_doc)
+    if os.path.exists(os.path.join(DATA_DIR, "saved_pdf.pdf")):
+        try:
+            pdf_loader = PyPDFLoader(os.path.join(DATA_DIR, "saved_pdf.pdf"))
+            pdf_doc = pdf_loader.load()
+            if pdf_doc:
+              docs.append(pdf_doc)
+        except Exception as e:
+            print(e)
     
     docs_list = [item for sublist in docs for item in sublist]
     
@@ -65,7 +69,6 @@ def data_ingestion():
         collection_name="rag-chroma",
         embedding=embedding_function,
     )
-    global retriever
     retriever = vectorstore.as_retriever()
 
 def remove_old_files():
@@ -82,7 +85,7 @@ def retrieval_grader(question):
         Question: {question} 
         Context: {context} 
         Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
-        input_variables=["question", "document"],
+        input_variables=["question", "context"],
     )
     
     # Chain
