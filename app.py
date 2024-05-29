@@ -36,6 +36,9 @@ with st.sidebar:
 
             st.success("Done")
 
+    with st.container(height=200):
+        st.markdown("Lorem ipsum. " * 1000)
+
 user_prompt = st.chat_input("Ask me anything about the content of the PDF or Web Link:")
 
 if user_prompt and (uploaded_file or video_url):
