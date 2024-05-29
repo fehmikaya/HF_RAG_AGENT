@@ -7,7 +7,7 @@ icons = {"assistant": "robot.png", "user": "man-kddi.png"}
 def streamer(text):
     for i in text:
         yield i
-        time.sleep(0.005)
+        time.sleep(0.05)
 
 if "console_out" not in st.session_state:
     st.session_state["console_out"] = ""
@@ -24,9 +24,8 @@ for message in st.session_state.messages:
         st.write(message['content'])
 
 with st.sidebar:
-    st.title("Menu:")
     uploaded_file = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button")
-    video_url = st.text_input("Enter Youtube Video Link: ")
+    video_url = st.text_input("Web Link: ")
     if st.button("Submit & Process"):
         with st.spinner("Processing..."):
             print("Processing files")
@@ -38,7 +37,7 @@ with st.sidebar:
                 print("Link uploaded:"+video_url)
 
             st.success("Done")
-    st.text_area("Console", st.session_state["console_out"], key="console")
+    st.text_area("Console", st.session_state["console_out"])
 
 user_prompt = st.chat_input("Ask me anything about the content of the PDF or Web Link:")
 
