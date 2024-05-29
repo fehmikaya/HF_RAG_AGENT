@@ -6,6 +6,4 @@ langgraph
 langchain-text-splitters
 pypdf
 sentence-transformers
-tavily-python
-langchainhub
-gpt4all
+bs4
