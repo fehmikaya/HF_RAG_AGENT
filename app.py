@@ -45,6 +45,7 @@ def data_ingestion():
                 web_doc = WebBaseLoader(url).load()
                 if web_doc:
                     docs.append(web_doc)
+                    st.session_state["console_out"] += "webdoc docs_list: " + len(docs_list) + "\n"
         except Exception as e:
           print(e)
 
