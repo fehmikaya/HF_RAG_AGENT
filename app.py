@@ -1,5 +1,6 @@
 import streamlit as st
 
+import time
 
 icons = {"assistant": "robot.png", "user": "man-kddi.png"}
 
