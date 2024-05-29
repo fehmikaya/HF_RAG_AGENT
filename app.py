@@ -37,7 +37,7 @@ with st.sidebar:
                 print("Link uploaded:"+video_url)
 
             st.success("Done")
-
+    st.markdown("Console:")
     with st.container(height=200):
         st.markdown(console_out)
 
@@ -51,7 +51,7 @@ if user_prompt and (uploaded_file or video_url):
     # Trigger assistant's response retrieval and update UI
     with st.spinner("Thinking..."):
         response = "I have an answer coming soon..."
-        console_out.append(response+"\n")
+        console_out=console_out+response+"\n"
     with st.chat_message("user", avatar="robot.png"):
         st.write_stream(streamer(response))
     st.session_state.messages.append({'role': 'assistant', "content": response})
