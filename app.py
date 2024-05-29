@@ -41,6 +41,7 @@ def data_ingestion():
         try:
             with open(os.path.join(DATA_DIR, "saved_link.txt"), 'r') as file:
                 url = file.read()
+                st.session_state["console_out"] += "URL: " + url + "\n"
                 web_doc = WebBaseLoader(url).load()
                 if web_doc:
                     docs.append(web_doc)
@@ -51,6 +52,7 @@ def data_ingestion():
         try:
             pdf_loader = PyPDFLoader(os.path.join(DATA_DIR, "saved_pdf.pdf"))
             pdf_doc = pdf_loader.load()
+            st.session_state["console_out"] += "pdf loaded\n"
             if pdf_doc:
               docs.append(pdf_doc)
         except Exception as e:
@@ -155,4 +157,4 @@ if user_prompt and (uploaded_file or web_url):
         st.write_stream(streamer(response))
     st.session_state.messages.append({'role': 'assistant', "content": response})
 
-    st.experimental_rerun()
+    st.rerun()
