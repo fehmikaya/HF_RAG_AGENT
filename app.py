@@ -88,6 +88,7 @@ def retrieval_grader(question):
     rag_chain = prompt | remote_llm | StrOutputParser()
     
     # Run
+    global retriever
     docs = retriever.invoke(question)
     generation = rag_chain.invoke({"context": "\n\n".join(doc.page_content for doc in docs), "question": question})
     return generation
@@ -130,7 +131,7 @@ with st.sidebar:
                 with open(DATA_DIR+"/saved_link.txt", "w") as file:
                     file.write(web_url)
                 st.session_state["console_out"] += "Link saved: " + web_url + "\n"
-                
+            global retriever
             retriever = data_ingestion()
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"])
