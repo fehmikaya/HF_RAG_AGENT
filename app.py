@@ -127,6 +127,7 @@ with st.sidebar:
     web_url = st.text_input("Web Link: ")
     if st.button("Submit & Process"):
         with st.spinner("Processing..."):
+            st.session_state["console_out"] = ""
             if len(os.listdir(DATA_DIR)) !=0:
                 remove_old_files()  
             if uploaded_file:
