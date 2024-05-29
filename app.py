@@ -1,14 +1,26 @@
 import streamlit as st
 
 import time
+import shutil
 import os
 
 from customllama3 import CustomLlama3
 
 from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
+from langchain_community.document_loaders import WebBaseLoader
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 icons = {"assistant": "robot.png", "user": "man-kddi.png"}
+
+DATA_DIR = "data"
+
+# Ensure data directory exists
+os.makedirs(DATA_DIR, exist_ok=True)
 
 # Get the API key from the environment variable
 HF_TOKEN = os.getenv("HF_TOKEN")
@@ -17,32 +29,69 @@ if HF_TOKEN is None:
     st.stop()
 
 remote_llm = CustomLlama3(bearer_token = HF_TOKEN)
+retriever = None
+
+def data_ingestion():
+    docs=[]
+
+    if os.path.exists(DATA_DIR+"/saved_link.txt"):
+        try:
+            with open(DATA_DIR+"/saved_link.txt", 'r') as file:
+                url = file.read()
+                web_doc = WebBaseLoader(url).load()
+                if web_doc:
+                    docs.append(web_doc)
+        except Exception as e:
+          print(e)
+
+    if os.path.exists(DATA_DIR+"/saved_pdf.pdf"):
+        pdf_loader = PyPDFLoader(DATA_DIR+"/saved_pdf.pdf")
+        pdf_doc = pdf_loader.load()
+        if pdf_doc:
+          docs.append(pdf_doc)
+    
+    docs_list = [item for sublist in docs for item in sublist]
+    
+    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+        chunk_size=250, chunk_overlap=0
+    )
+    doc_splits = text_splitter.split_documents(docs_list)
+    
+    embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+    
+    # Add to vectorDB
+    vectorstore = Chroma.from_documents(
+        documents=doc_splits,
+        collection_name="rag-chroma",
+        embedding=embedding_function,
+    )
+    global retriever = vectorstore.as_retriever()
+
+def remove_old_files():
+    shutil.rmtree(DATA_DIR)
+    os.makedirs(DATA_DIR)
 
 def retrieval_grader(question):
+
+    # Prompt
     prompt = PromptTemplate(
-        template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a grader assessing relevance
-        of a retrieved document to a user question. If the document contains keywords related to the user question,
-        grade it as relevant. It does not need to be a stringent test. The goal is to filter out erroneous retrievals. \n
-        Give a binary score 'yes' or 'no' score to indicate whether the document is relevant to the question. \n
-        Provide the binary score as a JSON with a single key 'score' and no premable or explanation.
-         <|eot_id|><|start_header_id|>user<|end_header_id|>
-        Here is the retrieved document: \n\n {document} \n\n
-        Here is the user question: {question} \n <|eot_id|><|start_header_id|>assistant<|end_header_id|>
-        """,
-        input_variables=["question", "document"]
+        template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an assistant for question-answering tasks. 
+        Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. 
+        Use three sentences maximum and keep the answer concise <|eot_id|><|start_header_id|>user<|end_header_id|>
+        Question: {question} 
+        Context: {context} 
+        Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
+        input_variables=["question", "document"],
     )
     
-    retrieval_grader = prompt | remote_llm | JsonOutputParser()
     
-    # Example usage
-    document = "Apples are rich in vitamins and fiber."
+    # Chain
+    rag_chain = prompt | llm | StrOutputParser()
     
-    result = retrieval_grader.invoke({
-        "question": question,
-        "document": document
-    })
-    
-    return result["score"]
+    # Run
+    docs = retriever.invoke(question)
+    generation = rag_chain.invoke({"context": docs, "question": question})
+    return generation
 
 
 def streamer(text):
@@ -73,23 +122,31 @@ with st.sidebar:
             print("Processing files")
                 
             if uploaded_file:
-                print("File uploaded")
+                filepath = DATA_DIR+"/saved_pdf.pdf"
+                with open(filepath, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+                st.session_state["console_out"] += "Uploaded: " + filepath + "\n"
         
             if web_url:
-                print("Link uploaded:"+web_url)
-
+                with open(DATA_DIR+"/saved_link.txt", "w") as file:
+                    file.write(web_url)
+                st.session_state["console_out"] += "Link saved: " + web_url + "\n"
+                
+            data_ingestion()
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"])
 
 user_prompt = st.chat_input("Ask me anything about the content of the PDF or Web Link:")
 
-if user_prompt: # and (uploaded_file or video_url)
+if user_prompt and (uploaded_file or web_url):
     st.session_state.messages.append({'role': 'user', "content": user_prompt})
     with st.chat_message("user", avatar="man-kddi.png"):
         st.write(user_prompt)
 
     # Trigger assistant's response retrieval and update UI
     with st.spinner("Thinking..."):
+        if len(os.listdir(DATA_DIR)) !=0:
+            remove_old_files()
         response = retrieval_grader(user_prompt)
         st.session_state["console_out"] += "retrieval_grader" + user_prompt + "\n"
     with st.chat_message("user", avatar="robot.png"):
