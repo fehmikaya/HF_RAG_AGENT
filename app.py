@@ -18,18 +18,20 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # Get the API key from the environment variable
 
-if 'initiated' not in st.session_state:
-    HF_TOKEN = os.getenv("HF_TOKEN")
-    if HF_TOKEN is None:
-        st.error("API key not found. Please set the HF_TOKEN secret in your Hugging Face Space.")
-        st.stop()
-    icons = {"assistant": "robot.png", "user": "man-kddi.png"}
-    DATA_DIR = "data"
-    remote_llm = CustomLlama3(bearer_token = HF_TOKEN)
-    # Ensure data directory exists
-    os.makedirs(DATA_DIR, exist_ok=True)
-    retriever=None
-    st.session_state.initiated="true" 
+HF_TOKEN = os.getenv("HF_TOKEN")
+if HF_TOKEN is None:
+    st.error("API key not found. Please set the HF_TOKEN secret in your Hugging Face Space.")
+    st.stop()
+icons = {"assistant": "robot.png", "user": "man-kddi.png"}
+DATA_DIR = "data"
+# Ensure data directory exists
+os.makedirs(DATA_DIR, exist_ok=True)
+
+if not hasattr(st, 'remote_llm'):
+  st.remote_llm = CustomLlama3(bearer_token = HF_TOKEN)
+
+if not hasattr(st, 'retriever'):
+  st.retriever = "None"
 
 def data_ingestion():
 
@@ -89,10 +91,10 @@ def retrieval_grader(question):
     )
     
     # Chain
-    rag_chain = prompt | remote_llm | StrOutputParser()
+    rag_chain = prompt | st.remote_llm | StrOutputParser()
     
     # Run
-    docs = retriever.invoke(question)
+    docs = st.retriever.invoke(question)
     generation = rag_chain.invoke({"context": "\n\n".join(doc.page_content for doc in docs), "question": question})
     return generation
 
@@ -134,7 +136,7 @@ with st.sidebar:
                 with open(DATA_DIR+"/saved_link.txt", "w") as file:
                     file.write(web_url)
                 st.session_state["console_out"] += "Link saved: " + web_url + "\n"
-            retriever = data_ingestion()
+            st.retriever = data_ingestion()
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"])
 
