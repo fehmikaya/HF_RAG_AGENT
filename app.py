@@ -43,6 +43,7 @@ def data_ingestion():
                 url = file.read()
                 st.session_state["console_out"] += "URL: " + url + "\n"
                 web_doc = WebBaseLoader("https://lilianweng.github.io/posts/2023-06-23-agent/").load()
+                st.session_state["console_out"] += "webdoc : " + web_doc + "\n"
                 if web_doc:
                     docs.append(web_doc)
                     st.session_state["console_out"] += "webdoc docs: " + len(docs) + "\n"
