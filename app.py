@@ -41,7 +41,6 @@ def data_ingestion():
         try:
             with open(os.path.join(DATA_DIR, "saved_link.txt"), 'r') as file:
                 url = file.read()
-                st.session_state["console_out"] += "URL: " + url + "\n"
                 web_doc = WebBaseLoader(url).load()
                 if web_doc:
                     docs.append(web_doc)
@@ -77,6 +76,7 @@ def data_ingestion():
     return vectorstore.as_retriever()
 
 def remove_old_files():
+    st.session_state["console_out"] += "remove_old_files\n"
     shutil.rmtree(DATA_DIR)
     os.makedirs(DATA_DIR)
 
