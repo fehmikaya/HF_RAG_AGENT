@@ -65,7 +65,7 @@ def data_ingestion():
         collection_name="rag-chroma",
         embedding=embedding_function,
     )
-    global retriever = vectorstore.as_retriever()
+    return vectorstore.as_retriever()
 
 def remove_old_files():
     shutil.rmtree(DATA_DIR)
@@ -132,7 +132,7 @@ with st.sidebar:
                     file.write(web_url)
                 st.session_state["console_out"] += "Link saved: " + web_url + "\n"
                 
-            data_ingestion()
+            retriever = data_ingestion()
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"])
 
