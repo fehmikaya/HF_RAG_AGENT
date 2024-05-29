@@ -86,7 +86,7 @@ def retrieval_grader(question):
     prompt = PromptTemplate(
         template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an assistant for question-answering tasks. 
         Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. 
-        Use three sentences maximum and keep the answer concise <|eot_id|><|start_header_id|>user<|end_header_id|>
+        Use five sentences maximum and keep the answer concise <|eot_id|><|start_header_id|>user<|end_header_id|>
         Question: {question} 
         Context: {context} 
         Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
@@ -133,7 +133,6 @@ with st.sidebar:
                 filepath = DATA_DIR+"/saved_pdf.pdf"
                 with open(filepath, "wb") as f:
                     f.write(uploaded_file.getbuffer())
-        
             if web_url:
                 with open(DATA_DIR+"/saved_link.txt", "w") as file:
                     file.write(web_url)
@@ -151,7 +150,6 @@ if user_prompt and (uploaded_file or web_url):
     # Trigger assistant's response retrieval and update UI
     with st.spinner("Thinking..."):
         response = retrieval_grader(user_prompt)
-        st.session_state["console_out"] += "retrieval_grader" + user_prompt + "\n"
     with st.chat_message("user", avatar="robot.png"):
         st.write_stream(streamer(response))
     st.session_state.messages.append({'role': 'assistant', "content": response})
