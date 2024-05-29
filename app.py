@@ -15,23 +15,21 @@ from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-icons = {"assistant": "robot.png", "user": "man-kddi.png"}
-
-DATA_DIR = "data"
-
-# Ensure data directory exists
-os.makedirs(DATA_DIR, exist_ok=True)
 
 # Get the API key from the environment variable
 
-if HF_TOKEN is None:
+if 'initiated' not in st.session_state:
     HF_TOKEN = os.getenv("HF_TOKEN")
     if HF_TOKEN is None:
         st.error("API key not found. Please set the HF_TOKEN secret in your Hugging Face Space.")
         st.stop()
-    
-if remote_llm is None:
+    icons = {"assistant": "robot.png", "user": "man-kddi.png"}
+    DATA_DIR = "data"
     remote_llm = CustomLlama3(bearer_token = HF_TOKEN)
+    # Ensure data directory exists
+    os.makedirs(DATA_DIR, exist_ok=True)
+    retriever=None
+    st.session_state.initiated=true 
 
 def data_ingestion():
 
@@ -94,7 +92,7 @@ def retrieval_grader(question):
     rag_chain = prompt | remote_llm | StrOutputParser()
     
     # Run
-    docs = st.session_state.retriever.invoke(question)
+    docs = retriever.invoke(question)
     generation = rag_chain.invoke({"context": "\n\n".join(doc.page_content for doc in docs), "question": question})
     return generation
 
@@ -124,8 +122,8 @@ with st.sidebar:
     web_url = st.text_input("Web Link: ")
     if st.button("Submit & Process"):
         with st.spinner("Processing..."):
-            print("Processing files")
-                
+            if len(os.listdir(DATA_DIR)) !=0:
+                remove_old_files()  
             if uploaded_file:
                 filepath = DATA_DIR+"/saved_pdf.pdf"
                 with open(filepath, "wb") as f:
@@ -136,7 +134,7 @@ with st.sidebar:
                 with open(DATA_DIR+"/saved_link.txt", "w") as file:
                     file.write(web_url)
                 st.session_state["console_out"] += "Link saved: " + web_url + "\n"
-            st.session_state.retriever = data_ingestion()
+            retriever = data_ingestion()
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"])
 
@@ -149,8 +147,6 @@ if user_prompt and (uploaded_file or web_url):
 
     # Trigger assistant's response retrieval and update UI
     with st.spinner("Thinking..."):
-        if len(os.listdir(DATA_DIR)) !=0:
-            remove_old_files()
         response = retrieval_grader(user_prompt)
         st.session_state["console_out"] += "retrieval_grader" + user_prompt + "\n"
     with st.chat_message("user", avatar="robot.png"):
