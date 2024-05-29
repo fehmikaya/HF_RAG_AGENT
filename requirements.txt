@@ -3,6 +3,6 @@ langchain_community
 tiktoken
 chromadb
 langgraph
-tavily-python
 langchain-text-splitters
 pypdf
+sentence-transformers
