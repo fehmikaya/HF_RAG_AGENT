@@ -9,7 +9,7 @@ def streamer(text):
         yield i
         time.sleep(0.005)
 
-console_out =""
+st.session_state.console_out=""
 
 # Streamlit app initialization
 st.title("RAG AGENT")
@@ -39,7 +39,7 @@ with st.sidebar:
             st.success("Done")
     st.markdown("Console:")
     with st.container(height=200):
-        st.markdown(console_out)
+        st.text_area(value=st.session_state.console_out, height=2000)
 
 user_prompt = st.chat_input("Ask me anything about the content of the PDF or Web Link:")
 
@@ -51,7 +51,7 @@ if user_prompt and (uploaded_file or video_url):
     # Trigger assistant's response retrieval and update UI
     with st.spinner("Thinking..."):
         response = "I have an answer coming soon..."
-        console_out=console_out+response+"\n"
+        st.session_state.console_out=st.session_state.console_out+response+"\n"
     with st.chat_message("user", avatar="robot.png"):
         st.write_stream(streamer(response))
     st.session_state.messages.append({'role': 'assistant', "content": response})
