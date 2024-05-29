@@ -84,13 +84,12 @@ def retrieval_grader(question):
         input_variables=["question", "document"],
     )
     
-    
     # Chain
-    rag_chain = prompt | llm | StrOutputParser()
+    rag_chain = prompt | remote_llm | StrOutputParser()
     
     # Run
     docs = retriever.invoke(question)
-    generation = rag_chain.invoke({"context": docs, "question": question})
+    generation = rag_chain.invoke({"context": "\n\n".join(doc.page_content for doc in docs), "question": question})
     return generation
 
 
