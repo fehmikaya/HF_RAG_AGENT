@@ -131,7 +131,6 @@ with st.sidebar:
                 with open(DATA_DIR+"/saved_link.txt", "w") as file:
                     file.write(web_url)
                 st.session_state["console_out"] += "Link saved: " + web_url + "\n"
-            global retriever
             retriever = data_ingestion()
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"])
