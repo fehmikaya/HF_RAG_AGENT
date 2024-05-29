@@ -42,24 +42,24 @@ def data_ingestion():
             with open(os.path.join(DATA_DIR, "saved_link.txt"), 'r') as file:
                 url = file.read()
                 st.session_state["console_out"] += "URL: " + url + "\n"
-                web_doc = WebBaseLoader("https://lilianweng.github.io/posts/2023-06-23-agent/").load()
+                web_doc = WebBaseLoader(url).load()
                 if web_doc:
                     docs.append(web_doc)
+                    st.session_state["console_out"] += "Web link loaded: " + url + "\n"
         except Exception as e:
-          st.session_state["console_out"] += "Exception: " + e + "\n"
+            st.error("WebBaseLoader Exception: " + e)
 
     if os.path.exists(os.path.join(DATA_DIR, "saved_pdf.pdf")):
         try:
             pdf_loader = PyPDFLoader(os.path.join(DATA_DIR, "saved_pdf.pdf"))
             pdf_doc = pdf_loader.load()
-            st.session_state["console_out"] += "pdf loaded\n"
             if pdf_doc:
-              docs.append(pdf_doc)
+                docs.append(pdf_doc)
+                st.session_state["console_out"] += "Pdf loaded\n"
         except Exception as e:
-            print(e)
+            st.error("PyPDFLoader Exception: " + e)
     
     docs_list = [item for sublist in docs for item in sublist]
-    st.session_state["console_out"] += f"Number of documents: {len(docs_list)}\n"
     
     text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=250, chunk_overlap=0
@@ -133,12 +133,10 @@ with st.sidebar:
                 filepath = DATA_DIR+"/saved_pdf.pdf"
                 with open(filepath, "wb") as f:
                     f.write(uploaded_file.getbuffer())
-                st.session_state["console_out"] += "Uploaded: " + filepath + "\n"
         
             if web_url:
                 with open(DATA_DIR+"/saved_link.txt", "w") as file:
                     file.write(web_url)
-                st.session_state["console_out"] += "Link saved: " + web_url + "\n"
             st.retriever = data_ingestion()
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"])
