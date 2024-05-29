@@ -38,7 +38,8 @@ with st.sidebar:
                 print("Link uploaded:"+video_url)
 
             st.success("Done")
-    st.text_area("Console",value=st.session_state["console_out"], height=200)
+    with st.container():
+       st.write(st.session_state["console_out"])
 
 user_prompt = st.chat_input("Ask me anything about the content of the PDF or Web Link:")
 
