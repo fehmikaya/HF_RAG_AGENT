@@ -23,16 +23,18 @@ DATA_DIR = "data"
 os.makedirs(DATA_DIR, exist_ok=True)
 
 # Get the API key from the environment variable
-HF_TOKEN = os.getenv("HF_TOKEN")
-if HF_TOKEN is None:
-    st.error("API key not found. Please set the HF_TOKEN secret in your Hugging Face Space.")
-    st.stop()
 
-remote_llm = CustomLlama3(bearer_token = HF_TOKEN)
-retriever = None
+if HF_TOKEN is None:
+    HF_TOKEN = os.getenv("HF_TOKEN")
+    if HF_TOKEN is None:
+        st.error("API key not found. Please set the HF_TOKEN secret in your Hugging Face Space.")
+        st.stop()
+    
+if remote_llm is None
+    remote_llm = CustomLlama3(bearer_token = HF_TOKEN)
 
 def data_ingestion():
-    global retriever
+
     docs=[]
     
     if os.path.exists(os.path.join(DATA_DIR, "saved_link.txt")):
@@ -69,7 +71,7 @@ def data_ingestion():
         collection_name="rag-chroma",
         embedding=embedding_function,
     )
-    retriever = vectorstore.as_retriever()
+    return vectorstore.as_retriever()
 
 def remove_old_files():
     shutil.rmtree(DATA_DIR)
@@ -92,9 +94,9 @@ def retrieval_grader(question):
     rag_chain = prompt | remote_llm | StrOutputParser()
     
     # Run
-    if retriever is not None:
+    if st.session_state.retriever is not None:
         st.session_state["console_out"] += "retriever not none" + "\n"
-    docs = retriever.invoke(question)
+    docs = st.session_state.retriever.invoke(question)
     generation = rag_chain.invoke({"context": "\n\n".join(doc.page_content for doc in docs), "question": question})
     return generation
 
@@ -136,7 +138,7 @@ with st.sidebar:
                 with open(DATA_DIR+"/saved_link.txt", "w") as file:
                     file.write(web_url)
                 st.session_state["console_out"] += "Link saved: " + web_url + "\n"
-            data_ingestion()
+            st.session_state.retriever = data_ingestion()
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"])
 
