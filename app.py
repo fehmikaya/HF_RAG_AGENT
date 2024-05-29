@@ -45,7 +45,7 @@ def data_ingestion():
                 web_doc = WebBaseLoader("https://lilianweng.github.io/posts/2023-06-23-agent/").load()
                 if web_doc:
                     docs.append(web_doc)
-                    st.session_state["console_out"] += "webdoc docs_list: " + len(docs_list) + "\n"
+                    st.session_state["console_out"] += "webdoc docs: " + len(docs) + "\n"
         except Exception as e:
           print(e)
 
