@@ -59,6 +59,7 @@ def data_ingestion():
             print(e)
     
     docs_list = [item for sublist in docs for item in sublist]
+    st.session_state["console_out"] += f"Number of documents: {len(docs_list)}\n"
     
     text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=250, chunk_overlap=0
