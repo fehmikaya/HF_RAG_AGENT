@@ -1,9 +1,11 @@
 langchain
 langchain_community
-langchain-nomic
 tiktoken
 chromadb
 langgraph
 langchain-text-splitters
 pypdf
 sentence-transformers
+tavily-python
+langchainhub
+gpt4all
