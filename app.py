@@ -42,7 +42,7 @@ def data_ingestion():
             with open(os.path.join(DATA_DIR, "saved_link.txt"), 'r') as file:
                 url = file.read()
                 st.session_state["console_out"] += "URL: " + url + "\n"
-                web_doc = WebBaseLoader(url).load()
+                web_doc = WebBaseLoader("https://lilianweng.github.io/posts/2023-06-23-agent/").load()
                 if web_doc:
                     docs.append(web_doc)
                     st.session_state["console_out"] += "webdoc docs_list: " + len(docs_list) + "\n"
