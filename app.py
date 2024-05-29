@@ -65,7 +65,8 @@ def data_ingestion():
         collection_name="rag-chroma",
         embedding=embedding_function,
     )
-    return vectorstore.as_retriever()
+    global retriever
+    retriever = vectorstore.as_retriever()
 
 def remove_old_files():
     shutil.rmtree(DATA_DIR)
@@ -88,7 +89,8 @@ def retrieval_grader(question):
     rag_chain = prompt | remote_llm | StrOutputParser()
     
     # Run
-    global retriever
+    if retriever is not None:
+        st.session_state["console_out"] += "retriever not none" + "\n"
     docs = retriever.invoke(question)
     generation = rag_chain.invoke({"context": "\n\n".join(doc.page_content for doc in docs), "question": question})
     return generation
@@ -131,7 +133,7 @@ with st.sidebar:
                 with open(DATA_DIR+"/saved_link.txt", "w") as file:
                     file.write(web_url)
                 st.session_state["console_out"] += "Link saved: " + web_url + "\n"
-            retriever = data_ingestion()
+            data_ingestion()
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"])
 
