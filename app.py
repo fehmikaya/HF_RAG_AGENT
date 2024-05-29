@@ -29,7 +29,7 @@ if 'initiated' not in st.session_state:
     # Ensure data directory exists
     os.makedirs(DATA_DIR, exist_ok=True)
     retriever=None
-    st.session_state.initiated=true 
+    st.session_state.initiated="true" 
 
 def data_ingestion():
 
