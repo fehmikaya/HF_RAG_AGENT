@@ -7,17 +7,18 @@ icons = {"assistant": "robot.png", "user": "man-kddi.png"}
 def streamer(text):
     for i in text:
         yield i
-        time.sleep(0.05)
+        time.sleep(0.02)
 
 if "console_out" not in st.session_state:
     st.session_state["console_out"] = ""
 
 # Streamlit app initialization
 st.title("RAG AGENT")
-st.markdown("RAG Agent with PDF and Web Search")
+st.markdown("RAG Agent with PDF and Web Search (Langchain & Langgraph)")
+st.markdown("Finds most related content from given sources with Sanity/Hallucination checks")
 
 if 'messages' not in st.session_state:
-    st.session_state.messages = [{'role': 'assistant', "content": 'Hello! Upload a PDF/Youtube Video link and ask me anything about the content.'}]
+    st.session_state.messages = [{'role': 'assistant', "content": 'Hello! Upload a PDF/Web link and ask me anything about the content.'}]
 
 for message in st.session_state.messages:
     with st.chat_message(message['role'], avatar=icons[message['role']]):
