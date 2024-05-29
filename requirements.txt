@@ -1,5 +1,6 @@
 langchain
 langchain_community
+langchain-nomic
 tiktoken
 chromadb
 langgraph
