@@ -39,7 +39,7 @@ with st.sidebar:
             st.success("Done")
     st.markdown("Console:")
     with st.container(height=200):
-        st.text_area(value=st.session_state.console_out, height=2000)
+        st.text_area("Console",value=st.session_state.console_out, height=2000)
 
 user_prompt = st.chat_input("Ask me anything about the content of the PDF or Web Link:")
 
