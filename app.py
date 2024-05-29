@@ -30,7 +30,7 @@ if HF_TOKEN is None:
         st.error("API key not found. Please set the HF_TOKEN secret in your Hugging Face Space.")
         st.stop()
     
-if remote_llm is None
+if remote_llm is None:
     remote_llm = CustomLlama3(bearer_token = HF_TOKEN)
 
 def data_ingestion():
@@ -94,8 +94,6 @@ def retrieval_grader(question):
     rag_chain = prompt | remote_llm | StrOutputParser()
     
     # Run
-    if st.session_state.retriever is not None:
-        st.session_state["console_out"] += "retriever not none" + "\n"
     docs = st.session_state.retriever.invoke(question)
     generation = rag_chain.invoke({"context": "\n\n".join(doc.page_content for doc in docs), "question": question})
     return generation
