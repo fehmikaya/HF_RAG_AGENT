@@ -5,6 +5,7 @@ import shutil
 import os
 
 from customllama3 import CustomLlama3
+from ragagent import RAGAgent
 
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.output_parsers import StrOutputParser
@@ -57,23 +58,7 @@ def data_ingestion():
                 st.session_state["console_out"] += "Pdf loaded\n"
         except Exception as e:
             st.error("PyPDFLoader Exception: " + e)
-    
-    docs_list = [item for sublist in docs for item in sublist]
-    
-    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-        chunk_size=250, chunk_overlap=0
-    )
-    doc_splits = text_splitter.split_documents(docs_list)
-    
-    embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-    
-    # Add to vectorDB
-    vectorstore = Chroma.from_documents(
-        documents=doc_splits,
-        collection_name="rag-chroma",
-        embedding=embedding_function,
-    )
-    return vectorstore.as_retriever()
+    return RAGAgent(docs).retriever
 
 def remove_old_files():
     st.session_state["console_out"] += "remove_old_files\n"
