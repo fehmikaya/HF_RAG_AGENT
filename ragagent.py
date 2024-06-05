@@ -49,18 +49,6 @@ class RAGAgent():
         st.error("API key not found. Please set the TAVILY_API_KEY secret in your Hugging Face Space.")
         st.stop()
 
-    router_llm = CustomLlama3(bearer_token = HF_TOKEN)
-    router_prompt = PromptTemplate(
-        template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an expert at routing a 
-        user question to a vectorstore or web search. Use the vectorstore for questions on LLM  agents, 
-        prompt engineering, and adversarial attacks. You do not need to be stringent with the keywords 
-        in the question related to these topics. Otherwise, use web-search. Give a binary choice 'web_search' 
-        or 'vectorstore' based on the question. Return the a JSON with a single key 'datasource' and 
-        no premable or explanation. Question to route: {question} <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
-        input_variables=["question"],
-    )
-    question_router = router_prompt | router_llm | JsonOutputParser()
-
     retrieval_grader_prompt = PromptTemplate(
         template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a grader assessing relevance
         of a retrieved document to a user question. If the document contains keywords related to the user question,
@@ -193,21 +181,6 @@ class RAGAgent():
         return {"documents": documents, "question": question}
 
 
-    def route_question(state):
-
-        print("---ROUTE QUESTION---")
-        question = state["question"]
-        print(question)
-        source = RAGAgent.question_router.invoke({"question": question})
-
-        if source["datasource"] == "web_search":
-            print("---ROUTE QUESTION TO WEB SEARCH---")
-            return "websearch"
-        elif source["datasource"] == "vectorstore":
-            print("---ROUTE QUESTION TO RAG---")
-            return "vectorstore"
-
-
     def decide_to_generate(state):
 
         print("---ASSESS GRADED DOCUMENTS---")
@@ -265,13 +238,7 @@ class RAGAgent():
     workflow.add_node("generate", generate)  # generatae
 
     # Build graph
-    workflow.set_conditional_entry_point(
-        route_question,
-        {
-            "websearch": "websearch",
-            "vectorstore": "retrieve",
-        },
-    )
+    workflow.set_entry_point("retrieve")
 
     workflow.add_edge("retrieve", "grade_documents")
     workflow.add_conditional_edges(
