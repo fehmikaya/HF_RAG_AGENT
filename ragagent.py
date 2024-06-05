@@ -37,8 +37,6 @@ class RAGAgent():
         )
         RAGAgent.retriever = vectorstore.as_retriever()
 
-    os.environ["TAVILY_API_KEY"] = userdata.get('TV_TOKEN')
-
     HF_TOKEN = os.getenv("HF_TOKEN")
     TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
     
