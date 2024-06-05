@@ -17,24 +17,15 @@ from langchain_community.embeddings.sentence_transformer import SentenceTransfor
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
-# Get the API key from the environment variable
-
-HF_TOKEN = os.getenv("HF_TOKEN")
-if HF_TOKEN is None:
-    st.error("API key not found. Please set the HF_TOKEN secret in your Hugging Face Space.")
-    st.stop()
 icons = {"assistant": "robot.png", "user": "man-kddi.png"}
 DATA_DIR = "data"
 # Ensure data directory exists
 os.makedirs(DATA_DIR, exist_ok=True)
 
-if not hasattr(st, 'remote_llm'):
-  st.remote_llm = CustomLlama3(bearer_token = HF_TOKEN)
+if not hasattr(st, 'agent'):
+  st.agent = "None"
 
-if not hasattr(st, 'retriever'):
-  st.retriever = "None"
-
-def data_ingestion():
+def init_agent_with_docs():
 
     docs=[]
     
@@ -58,34 +49,12 @@ def data_ingestion():
                 st.session_state["console_out"] += "Pdf loaded\n"
         except Exception as e:
             st.error("PyPDFLoader Exception: " + e)
-    return RAGAgent(docs).retriever
+    return RAGAgent(docs)
 
 def remove_old_files():
     st.session_state["console_out"] += "remove_old_files\n"
     shutil.rmtree(DATA_DIR)
     os.makedirs(DATA_DIR)
-
-def retrieval_grader(question):
-
-    # Prompt
-    prompt = PromptTemplate(
-        template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an assistant for question-answering tasks. 
-        Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. 
-        Use five sentences maximum and keep the answer concise <|eot_id|><|start_header_id|>user<|end_header_id|>
-        Question: {question} 
-        Context: {context} 
-        Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
-        input_variables=["question", "context"],
-    )
-    
-    # Chain
-    rag_chain = prompt | st.remote_llm | StrOutputParser()
-    
-    # Run
-    docs = st.retriever.invoke(question)
-    generation = rag_chain.invoke({"context": "\n\n".join(doc.page_content for doc in docs), "question": question})
-    return generation
-
 
 def streamer(text):
     for i in text:
@@ -122,7 +91,7 @@ with st.sidebar:
             if web_url:
                 with open(DATA_DIR+"/saved_link.txt", "w") as file:
                     file.write(web_url)
-            st.retriever = data_ingestion()
+            st.agent = init_agent_with_docs()
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"])
 
@@ -130,12 +99,17 @@ user_prompt = st.chat_input("Ask me anything about the content of the PDF or Web
 
 if user_prompt and (uploaded_file or web_url):
     st.session_state.messages.append({'role': 'user', "content": user_prompt})
+    response = "Could not find an answer."
     with st.chat_message("user", avatar="man-kddi.png"):
         st.write(user_prompt)
 
     # Trigger assistant's response retrieval and update UI
     with st.spinner("Thinking..."):
-        response = retrieval_grader(user_prompt)
+        inputs = {"question": user_prompt}
+        for output in st.agent.app.stream(inputs):
+            for key, value in output.items():
+                if "generation" in value:
+                    response = value["generation"]
     with st.chat_message("user", avatar="robot.png"):
         st.write_stream(streamer(response))
     st.session_state.messages.append({'role': 'assistant', "content": response})
