@@ -11,6 +11,8 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 
 from langgraph.graph import END, StateGraph
 
+from customllama3 import CustomLlama3
+
 from typing_extensions import TypedDict
 from typing import List
 from langchain_core.documents import Document
