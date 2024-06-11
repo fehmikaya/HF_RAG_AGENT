@@ -38,6 +38,7 @@ class RAGAgent():
             embedding=embedding_function,
         )
         RAGAgent.retriever = vectorstore.as_retriever()
+        RAGAgent.logs = ""
 
     HF_TOKEN = os.getenv("HF_TOKEN")
     TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
@@ -119,7 +120,7 @@ class RAGAgent():
       documents: List[str]
     
     def retrieve(state):
-        print("---RETRIEVE---")
+        RAGAgent.logs += "---RETRIEVE---"
         question = state["question"]
 
         # Retrieval
@@ -127,7 +128,7 @@ class RAGAgent():
         return {"documents": documents, "question": question}
 
     def generate(state):
-        print("---GENERATE---")
+        RAGAgent.logs += "---GENERATE---"
         question = state["question"]
         documents = state["documents"]
 
