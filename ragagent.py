@@ -21,25 +21,6 @@ import os
 
 class RAGAgent():
 
-    def __init__(self, docs):
-        docs_list = [item for sublist in docs for item in sublist]
-
-        text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-            chunk_size=1000, chunk_overlap=200
-        )
-        doc_splits = text_splitter.split_documents(docs_list)
-
-        embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-
-        # Add to vectorDB
-        vectorstore = Chroma.from_documents(
-            documents=doc_splits,
-            collection_name="rag-chroma",
-            embedding=embedding_function,
-        )
-        RAGAgent.retriever = vectorstore.as_retriever()
-        RAGAgent.logs = ""
-
     HF_TOKEN = os.getenv("HF_TOKEN")
     TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
     
@@ -62,54 +43,75 @@ class RAGAgent():
         """,
         input_variables=["question", "document"],
     )
-    retrieval_grader_llm = CustomLlama3(bearer_token = HF_TOKEN)
-    retrieval_grader = retrieval_grader_prompt | retrieval_grader_llm | JsonOutputParser()
 
     answer_prompt = PromptTemplate(
-    template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an assistant for question-answering tasks. 
-    Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. 
-    Use three sentences maximum and keep the answer concise <|eot_id|><|start_header_id|>user<|end_header_id|>
-    Question: {question} 
-    Context: {context} 
-    Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
-    input_variables=["question", "document"],
+        template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are an assistant for question-answering tasks. 
+        Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. 
+        Use three sentences maximum and keep the answer concise <|eot_id|><|start_header_id|>user<|end_header_id|>
+        Question: {question} 
+        Context: {context} 
+        Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
+        input_variables=["question", "document"],
     )
-    answer_llm = CustomLlama3(bearer_token = HF_TOKEN)
-
-    # Post-processing
-    def format_docs(docs):
-        return "\n\n".join(doc.page_content for doc in docs)
-
-    rag_chain = answer_prompt | answer_llm | StrOutputParser()
 
     hallucination_prompt = PromptTemplate(
-    template=""" <|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a grader assessing whether 
-    an answer is grounded in / supported by a set of facts. Give a binary 'yes' or 'no' score to indicate 
-    whether the answer is grounded in / supported by a set of facts. Provide the binary score as a JSON with a 
-    single key 'score' and no preamble or explanation. <|eot_id|><|start_header_id|>user<|end_header_id|>
-    Here are the facts:
-    \n ------- \n
-    {documents} 
-    \n ------- \n
-    Here is the answer: {generation}  <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
-    input_variables=["generation", "documents"],
+        template=""" <|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a grader assessing whether 
+        an answer is grounded in / supported by a set of facts. Give a binary 'yes' or 'no' score to indicate 
+        whether the answer is grounded in / supported by a set of facts. Provide the binary score as a JSON with a 
+        single key 'score' and no preamble or explanation. <|eot_id|><|start_header_id|>user<|end_header_id|>
+        Here are the facts:
+        \n ------- \n
+        {documents} 
+        \n ------- \n
+        Here is the answer: {generation}  <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
+        input_variables=["generation", "documents"],
     )
-    hallucination_llm = CustomLlama3(bearer_token = HF_TOKEN)
-    hallucination_grader = hallucination_prompt | hallucination_llm | JsonOutputParser()
 
     answer_grader_prompt = PromptTemplate(
-    template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a grader assessing whether an 
-    answer is useful to resolve a question. Give a binary score 'yes' or 'no' to indicate whether the answer is 
-    useful to resolve a question. Provide the binary score as a JSON with a single key 'score' and no preamble or explanation.
-     <|eot_id|><|start_header_id|>user<|end_header_id|> Here is the answer:
-    \n ------- \n
-    {generation} 
-    \n ------- \n
-    Here is the question: {question} <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
-    input_variables=["generation", "question"],
+        template="""<|begin_of_text|><|start_header_id|>system<|end_header_id|> You are a grader assessing whether an 
+        answer is useful to resolve a question. Give a binary score 'yes' or 'no' to indicate whether the answer is 
+        useful to resolve a question. Provide the binary score as a JSON with a single key 'score' and no preamble or explanation.
+         <|eot_id|><|start_header_id|>user<|end_header_id|> Here is the answer:
+        \n ------- \n
+        {generation} 
+        \n ------- \n
+        Here is the question: {question} <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
+        input_variables=["generation", "question"],
     )
-    answer_grader_llm = CustomLlama3(bearer_token = HF_TOKEN)
-    answer_grader = answer_grader_prompt | answer_grader_llm | JsonOutputParser()
+
+    retrieval_grader, rag_chain, hallucination_grader, answer_grader = None
+    
+    logs = ""
+
+    print("RAGAgent()")
+
+    def reset_agent():
+        RAGAgent.retrieval_grader = RAGAgent.retrieval_grader_prompt | CustomLlama3(bearer_token = HF_TOKEN) | JsonOutputParser()
+        RAGAgent.rag_chain = RAGAgent.answer_prompt | CustomLlama3(bearer_token = HF_TOKEN) | StrOutputParser()
+        RAGAgent.hallucination_grader = RAGAgent.hallucination_prompt | CustomLlama3(bearer_token = HF_TOKEN) | JsonOutputParser()
+        RAGAgent.answer_grader = RAGAgent.answer_grader_prompt | CustomLlama3(bearer_token = HF_TOKEN) | JsonOutputParser()     
+        RAGAgent.logs = ""
+        print("reset_agent")
+        
+    def __init__(self, docs):
+        print("init")
+        docs_list = [item for sublist in docs for item in sublist]
+
+        text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+            chunk_size=1000, chunk_overlap=200
+        )
+        doc_splits = text_splitter.split_documents(docs_list)
+
+        embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+
+        # Add to vectorDB
+        vectorstore = Chroma.from_documents(
+            documents=doc_splits,
+            collection_name="rag-chroma",
+            embedding=embedding_function,
+        )
+        RAGAgent.retriever = vectorstore.as_retriever()
+        RAGAgent.reset_agent()  
 
     web_search_tool = TavilySearchResults(k=3)
 
