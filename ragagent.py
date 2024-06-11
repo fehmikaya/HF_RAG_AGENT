@@ -84,10 +84,10 @@ class RAGAgent():
     print("RAGAgent()")
 
     def reset_agent():
-        RAGAgent.retrieval_grader = RAGAgent.retrieval_grader_prompt | CustomLlama3(bearer_token = HF_TOKEN) | JsonOutputParser()
-        RAGAgent.rag_chain = RAGAgent.answer_prompt | CustomLlama3(bearer_token = HF_TOKEN) | StrOutputParser()
-        RAGAgent.hallucination_grader = RAGAgent.hallucination_prompt | CustomLlama3(bearer_token = HF_TOKEN) | JsonOutputParser()
-        RAGAgent.answer_grader = RAGAgent.answer_grader_prompt | CustomLlama3(bearer_token = HF_TOKEN) | JsonOutputParser()     
+        RAGAgent.retrieval_grader = RAGAgent.retrieval_grader_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()
+        RAGAgent.rag_chain = RAGAgent.answer_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | StrOutputParser()
+        RAGAgent.hallucination_grader = RAGAgent.hallucination_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()
+        RAGAgent.answer_grader = RAGAgent.answer_grader_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()     
         RAGAgent.logs = ""
         print("reset_agent")
         
