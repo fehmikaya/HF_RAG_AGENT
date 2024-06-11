@@ -120,7 +120,7 @@ class RAGAgent():
       documents: List[str]
     
     def retrieve(state):
-        RAGAgent.logs += "---RETRIEVE---"
+        RAGAgent.logs += "---RETRIEVE---\n"
         question = state["question"]
 
         # Retrieval
@@ -128,7 +128,7 @@ class RAGAgent():
         return {"documents": documents, "question": question}
 
     def generate(state):
-        RAGAgent.logs += "---GENERATE---"
+        RAGAgent.logs += "---GENERATE---\n"
         question = state["question"]
         documents = state["documents"]
 
@@ -139,7 +139,7 @@ class RAGAgent():
 
     def grade_documents(state):
 
-        print("---CHECK DOCUMENT RELEVANCE TO QUESTION---")
+        RAGAgent.logs += "---CHECK DOCUMENT RELEVANCE TO QUESTION---\n"
         question = state["question"]
         documents = state["documents"]
 
@@ -153,11 +153,11 @@ class RAGAgent():
             grade = score["score"]
             # Document relevant
             if grade.lower() == "yes":
-                print("---GRADE: DOCUMENT RELEVANT---")
+                RAGAgent.logs += "---GRADE: DOCUMENT RELEVANT---\n"
                 filtered_docs.append(d)
             # Document not relevant
             else:
-                print("---GRADE: DOCUMENT NOT RELEVANT---")
+                RAGAgent.logs += "---GRADE: DOCUMENT NOT RELEVANT---\n"
                 # We do not include the document in filtered_docs
                 # We set a flag to indicate that we want to run web search
                 web_search = "Yes"
@@ -167,7 +167,7 @@ class RAGAgent():
 
     def web_search(state):
 
-        print("---WEB SEARCH---")
+        RAGAgent.logs += "---WEB SEARCH---\n"
         question = state["question"]
         documents = state["documents"]
 
@@ -184,7 +184,7 @@ class RAGAgent():
 
     def decide_to_generate(state):
 
-        print("---ASSESS GRADED DOCUMENTS---")
+        RAGAgent.logs += "---ASSESS GRADED DOCUMENTS---\n"
         question = state["question"]
         web_search = state["web_search"]
         filtered_documents = state["documents"]
@@ -192,18 +192,16 @@ class RAGAgent():
         if web_search == "Yes":
             # All documents have been filtered check_relevance
             # We will re-generate a new query
-            print(
-                "---DECISION: ALL DOCUMENTS ARE NOT RELEVANT TO QUESTION, INCLUDE WEB SEARCH---"
-            )
+            RAGAgent.logs += "---DECISION: ALL DOCUMENTS ARE NOT RELEVANT TO QUESTION, INCLUDE WEB SEARCH---\n"
             return "websearch"
         else:
             # We have relevant documents, so generate answer
-            print("---DECISION: GENERATE---")
+            RAGAgent.logs += "---DECISION: GENERATE---\n"
             return "generate"
 
     def grade_generation_v_documents_and_question(state):
 
-        print("---CHECK HALLUCINATIONS---")
+        RAGAgent.logs += "---CHECK HALLUCINATIONS---\n"
         question = state["question"]
         documents = state["documents"]
         generation = state["generation"]
@@ -215,19 +213,19 @@ class RAGAgent():
 
         # Check hallucination
         if grade == "yes":
-            print("---DECISION: GENERATION IS GROUNDED IN DOCUMENTS---")
+            RAGAgent.logs += "---DECISION: GENERATION IS GROUNDED IN DOCUMENTS---\n"
             # Check question-answering
             print("---GRADE GENERATION vs QUESTION---")
             score = RAGAgent.answer_grader.invoke({"question": question, "generation": generation})
             grade = score["score"]
             if grade == "yes":
-                print("---DECISION: GENERATION ADDRESSES QUESTION---")
+                RAGAgent.logs += "---DECISION: GENERATION ADDRESSES QUESTION---\n"
                 return "useful"
             else:
-                print("---DECISION: GENERATION DOES NOT ADDRESS QUESTION---")
+                RAGAgent.logs += "---DECISION: GENERATION DOES NOT ADDRESS QUESTION---\n"
                 return "not useful"
         else:
-            print("---DECISION: GENERATION IS NOT GROUNDED IN DOCUMENTS, RE-TRY---")
+            RAGAgent.logs += "---DECISION: GENERATION IS NOT GROUNDED IN DOCUMENTS, RE-TRY---\n"
             return "not supported"
 
     workflow = StateGraph(GraphState)
