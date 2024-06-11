@@ -11,7 +11,7 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_community.document_loaders import WebBaseLoader
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -28,25 +28,14 @@ if not hasattr(st, 'agent'):
 def init_agent_with_docs():
 
     docs=[]
-    
-    if os.path.exists(os.path.join(DATA_DIR, "saved_link.txt")):
-        try:
-            with open(os.path.join(DATA_DIR, "saved_link.txt"), 'r') as file:
-                url = file.read()
-                web_doc = WebBaseLoader(url).load()
-                if web_doc:
-                    docs.append(web_doc)
-                    st.session_state["console_out"] += "Web link loaded: " + url + "\n"
-        except Exception as e:
-            st.error("WebBaseLoader Exception: " + e)
 
-    if os.path.exists(os.path.join(DATA_DIR, "saved_pdf.pdf")):
+    if os.path.exists(DATA_DIR)):
         try:
-            pdf_loader = PyPDFLoader(os.path.join(DATA_DIR, "saved_pdf.pdf"))
-            pdf_doc = pdf_loader.load()
-            if pdf_doc:
-                docs.append(pdf_doc)
-                st.session_state["console_out"] += "Pdf loaded\n"
+            pdf_loader = PyPDFDirectoryLoader(DATA_DIR)
+            pdf_docs = pdf_loader.load()
+            if pdf_docs:
+                docs.append(pdf_docs)
+                st.session_state["console_out"] += "Pdf's loaded\n"
         except Exception as e:
             st.error("PyPDFLoader Exception: " + e)
     return RAGAgent(docs)
@@ -70,27 +59,24 @@ st.markdown("RAG Agent with PDF and Web Search (Langchain & Langgraph)")
 st.markdown("Finds most related content from given sources with Sanity/Hallucination checks")
 
 if 'messages' not in st.session_state:
-    st.session_state.messages = [{'role': 'assistant', "content": 'Hello! Upload a PDF/Web link and ask me anything about the content.'}]
+    st.session_state.messages = [{'role': 'assistant', "content": "Hello! Upload PDF's and ask me anything about the content."}]
 
 for message in st.session_state.messages:
     with st.chat_message(message['role'], avatar=icons[message['role']]):
         st.write(message['content'])
 
 with st.sidebar:
-    uploaded_file = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button")
-    web_url = st.text_input("Web Link: ")
+    uploaded_files = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", type="pdf", accept_multiple_files=True)
+
     if st.button("Submit & Process"):
         with st.spinner("Processing..."):
             st.session_state["console_out"] = ""
             if len(os.listdir(DATA_DIR)) !=0:
                 remove_old_files()  
-            if uploaded_file:
-                filepath = DATA_DIR+"/saved_pdf.pdf"
+            for index, file in zip(range(0,uploaded_files),uploaded_files):
+                filepath = DATA_DIR+"/saved_pdf_"+index+".pdf"
                 with open(filepath, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
-            if web_url:
-                with open(DATA_DIR+"/saved_link.txt", "w") as file:
-                    file.write(web_url)
+                    f.write(file.getbuffer())
             st.agent = init_agent_with_docs()
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"])
