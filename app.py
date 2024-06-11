@@ -29,7 +29,7 @@ def init_agent_with_docs():
 
     docs=[]
 
-    if os.path.exists(DATA_DIR)):
+    if os.path.exists(DATA_DIR):
         try:
             pdf_loader = PyPDFDirectoryLoader(DATA_DIR)
             pdf_docs = pdf_loader.load()
