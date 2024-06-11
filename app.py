@@ -83,7 +83,7 @@ with st.sidebar:
 
 user_prompt = st.chat_input("Ask me anything about the content of the PDF or Web Link:")
 
-if user_prompt and (uploaded_file or web_url):
+if user_prompt and uploaded_files:
     st.session_state.messages.append({'role': 'user', "content": user_prompt})
     response = "Could not find an answer."
     with st.chat_message("user", avatar="man-kddi.png"):
