@@ -73,8 +73,8 @@ with st.sidebar:
             st.session_state["console_out"] = ""
             if len(os.listdir(DATA_DIR)) !=0:
                 remove_old_files()  
-            for index, file in zip(range(0,uploaded_files),uploaded_files):
-                filepath = DATA_DIR+"/saved_pdf_"+index+".pdf"
+            for index, file in enumerate(uploaded_files):
+                filepath = os.path.join(DATA_DIR, f"saved_pdf_{index}.pdf")
                 with open(filepath, "wb") as f:
                     f.write(file.getbuffer())
             st.agent = init_agent_with_docs()
