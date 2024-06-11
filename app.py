@@ -79,7 +79,7 @@ with st.sidebar:
                     f.write(file.getbuffer())
             st.agent = init_agent_with_docs()
             st.success("Done")
-    st.text_area("Console", st.session_state["console_out"])
+    st.text_area("Console", st.session_state["console_out"], height=250)
 
 user_prompt = st.chat_input("Ask me anything about the content of the PDF or Web Link:")
 
