@@ -79,8 +79,6 @@ class RAGAgent():
         input_variables=["generation", "question"],
     )
 
-    retrieval_grader, rag_chain, hallucination_grader, answer_grader = None
-    
     logs = ""
 
     print("RAGAgent()")
