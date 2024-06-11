@@ -145,7 +145,8 @@ class RAGAgent():
 
         # Score each doc
         filtered_docs = []
-        web_search = "No"
+        web_search = "Yes"
+        
         for d in documents:
             score = RAGAgent.retrieval_grader.invoke(
                 {"question": question, "document": d.page_content}
@@ -155,13 +156,11 @@ class RAGAgent():
             if grade.lower() == "yes":
                 RAGAgent.logs += "---GRADE: DOCUMENT RELEVANT---\n"
                 filtered_docs.append(d)
+                web_search = "No"
             # Document not relevant
             else:
                 RAGAgent.logs += "---GRADE: DOCUMENT NOT RELEVANT---\n"
-                # We do not include the document in filtered_docs
-                # We set a flag to indicate that we want to run web search
-                web_search = "Yes"
-                continue
+                
         return {"documents": filtered_docs, "question": question, "web_search": web_search}
 
 
