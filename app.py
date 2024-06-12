@@ -22,8 +22,8 @@ DATA_DIR = "data"
 # Ensure data directory exists
 os.makedirs(DATA_DIR, exist_ok=True)
 
-if not hasattr(st, 'agent'):
-  st.agent = "None"
+if not hasattr(st.session_state, 'agent'):
+  st.session_state.agent = "None"
 
 def init_agent_with_docs():
 
@@ -77,7 +77,7 @@ with st.sidebar:
                 filepath = os.path.join(DATA_DIR, f"saved_pdf_{index}.pdf")
                 with open(filepath, "wb") as f:
                     f.write(file.getbuffer())
-            st.agent = init_agent_with_docs()
+            st.session_state.agent = init_agent_with_docs()
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"], height=250)
 
@@ -92,7 +92,7 @@ if user_prompt and uploaded_files:
     # Trigger assistant's response retrieval and update UI
     with st.spinner("Thinking..."):
         inputs = {"question": user_prompt}
-        for output in st.agent.app.stream(inputs):
+        for output in st.session_state.agent.app.stream(inputs):
             for key, value in output.items():
                 if "generation" in value:
                     response = value["generation"]
