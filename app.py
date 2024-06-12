@@ -11,20 +11,21 @@ from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_community.document_loaders import WebBaseLoader
-from langchain_community.document_loaders import PyPDFDirectoryLoader
+from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 icons = {"assistant": "robot.png", "user": "man-kddi.png"}
-DATA_DIR = "data"
+# DATA_DIR = "data"
 # Ensure data directory exists
-os.makedirs(DATA_DIR, exist_ok=True)
+# os.makedirs(DATA_DIR, exist_ok=True)
 
-if not hasattr(st.session_state, 'agent'):
-  st.session_state.agent = "None"
+# if not hasattr(st.session_state, 'agent'):
+#  st.session_state.agent = "None"
 
+'''
 def init_agent_with_docs():
 
     docs=[]
@@ -44,6 +45,7 @@ def remove_old_files():
     st.session_state["console_out"] += "remove_old_files\n"
     shutil.rmtree(DATA_DIR)
     os.makedirs(DATA_DIR)
+'''
 
 def streamer(text):
     for i in text:
@@ -71,13 +73,21 @@ with st.sidebar:
     if st.button("Submit & Process"):
         with st.spinner("Processing..."):
             st.session_state["console_out"] = ""
-            if len(os.listdir(DATA_DIR)) !=0:
-                remove_old_files()  
+            #if len(os.listdir(DATA_DIR)) !=0:
+            #    remove_old_files()  
+            '''
             for index, file in enumerate(uploaded_files):
                 filepath = os.path.join(DATA_DIR, f"saved_pdf_{index}.pdf")
                 with open(filepath, "wb") as f:
                     f.write(file.getbuffer())
             st.session_state.agent = init_agent_with_docs()
+            '''
+            if uploaded_files:
+                pdf_docs = []
+                for uploaded_file in uploaded_files:
+                    pdf_loader = PyPDFLoader(uploaded_file)
+                    pdf_docs.append(pdf_loader)
+                st.session_state.agent = RAGAgent(docs)
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"], height=250)
 
