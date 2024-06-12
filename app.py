@@ -87,7 +87,7 @@ with st.sidebar:
                 for uploaded_file in uploaded_files:
                     pdf_loader = PyPDFLoader(uploaded_file)
                     pdf_docs.append(pdf_loader)
-                st.session_state.agent = RAGAgent(docs)
+                st.session_state.agent = RAGAgent(pdf_docs)
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"], height=250)
 
