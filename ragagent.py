@@ -104,9 +104,7 @@ class RAGAgent():
         RAGAgent.reset_chains()
         RAGAgent.logs=""
 
-    def get_logs(self):
-        return self._logs
-    def add_log(self, log):
+    def add_log(log):
         RAGAgent.logs += log + "\n"
         
     web_search_tool = TavilySearchResults(k=3)
