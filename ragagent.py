@@ -117,7 +117,7 @@ class RAGAgent():
       web_search: str
       documents: List[str]
     
-    def retrieve(self, state):
+    def retrieve(state):
         RAGAgent.add_log("---RETRIEVE---")
         question = state["question"]
 
