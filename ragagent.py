@@ -115,7 +115,7 @@ class RAGAgent():
 
     def get_logs(self):
         return self._logs
-    def add_log(log):
+    def add_log(self, log):
         self._logs += log + "\n"
         
     web_search_tool = TavilySearchResults(k=3)
