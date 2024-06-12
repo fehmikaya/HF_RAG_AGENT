@@ -96,7 +96,7 @@ if user_prompt and uploaded_files:
             for key, value in output.items():
                 if "generation" in value:
                     response = value["generation"]
-        st.session_state["console_out"] = st.agent.logs
+        st.session_state["console_out"] = st.session_state.agent.logs
     with st.chat_message("user", avatar="robot.png"):
         st.write_stream(streamer(response))
     st.session_state.messages.append({'role': 'assistant', "content": response})
