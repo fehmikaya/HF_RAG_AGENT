@@ -78,19 +78,7 @@ class RAGAgent():
         Here is the question: {question} <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
         input_variables=["generation", "question"],
     )
-
-    logs = ""
-
-    print("RAGAgent()")
-
-    def reset_agent():
-        RAGAgent.retrieval_grader = RAGAgent.retrieval_grader_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()
-        RAGAgent.rag_chain = RAGAgent.answer_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | StrOutputParser()
-        RAGAgent.hallucination_grader = RAGAgent.hallucination_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()
-        RAGAgent.answer_grader = RAGAgent.answer_grader_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()     
-        RAGAgent.logs = ""
-        print("reset_agent")
-        
+       
     def __init__(self, docs):
         print("init")
         docs_list = [item for sublist in docs for item in sublist]
@@ -99,18 +87,37 @@ class RAGAgent():
             chunk_size=1000, chunk_overlap=200
         )
         doc_splits = text_splitter.split_documents(docs_list)
-
         embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-
         # Add to vectorDB
         vectorstore = Chroma.from_documents(
             documents=doc_splits,
             collection_name="rag-chroma",
             embedding=embedding_function,
         )
-        RAGAgent.retriever = vectorstore.as_retriever()
-        RAGAgent.reset_agent()  
+        self._retriever = vectorstore.as_retriever()
+        self._retrieval_grader = RAGAgent.retrieval_grader_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()
+        self._rag_chain = RAGAgent.answer_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | StrOutputParser()
+        self._hallucination_grader = RAGAgent.hallucination_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()
+        self._answer_grader = RAGAgent.answer_grader_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser() 
+        self._logs=""
 
+    def get_retriever(self):
+        return self._retriever
+    def get_retrieval_grader(self):
+        return self._retrieval_grader
+    def get_rag_chain(self):
+        return self._rag_chain
+    def get_hallucination_grader(self):
+        return self._hallucination_grader
+    def get_answer_grader(self):
+        return self._answer_grader
+
+
+    def get_logs(self):
+        return self._logs
+    def add_log(log):
+        self._logs += log + "\n"
+        
     web_search_tool = TavilySearchResults(k=3)
 
     class GraphState(TypedDict):
@@ -120,26 +127,26 @@ class RAGAgent():
       documents: List[str]
     
     def retrieve(state):
-        RAGAgent.logs += "---RETRIEVE---\n"
+        add_log("---RETRIEVE---")
         question = state["question"]
 
         # Retrieval
-        documents = RAGAgent.retriever.invoke(question)
+        documents = get_retriever.invoke(question)
         return {"documents": documents, "question": question}
 
     def generate(state):
-        RAGAgent.logs += "---GENERATE---\n"
+        add_log("---GENERATE---")
         question = state["question"]
         documents = state["documents"]
 
         # RAG generation
-        generation = RAGAgent.rag_chain.invoke({"context": documents, "question": question})
+        generation = get_rag_chain.invoke({"context": documents, "question": question})
         return {"documents": documents, "question": question, "generation": generation}
 
 
     def grade_documents(state):
 
-        RAGAgent.logs += "---CHECK DOCUMENT RELEVANCE TO QUESTION---\n"
+        add_log("---CHECK DOCUMENT RELEVANCE TO QUESTION---")
         question = state["question"]
         documents = state["documents"]
 
@@ -148,25 +155,25 @@ class RAGAgent():
         web_search = "Yes"
         
         for d in documents:
-            score = RAGAgent.retrieval_grader.invoke(
+            score = get_retrieval_grader.invoke(
                 {"question": question, "document": d.page_content}
             )
             grade = score["score"]
             # Document relevant
             if grade.lower() == "yes":
-                RAGAgent.logs += "---GRADE: DOCUMENT RELEVANT---\n"
+                add_log("---GRADE: DOCUMENT RELEVANT---")
                 filtered_docs.append(d)
                 web_search = "No"
             # Document not relevant
             else:
-                RAGAgent.logs += "---GRADE: DOCUMENT NOT RELEVANT---\n"
+                add_log("---GRADE: DOCUMENT NOT RELEVANT---")
                 
         return {"documents": filtered_docs, "question": question, "web_search": web_search}
 
 
     def web_search(state):
 
-        RAGAgent.logs += "---WEB SEARCH---\n"
+        add_log("---WEB SEARCH---")
         question = state["question"]
         documents = state["documents"]
 
@@ -183,7 +190,7 @@ class RAGAgent():
 
     def decide_to_generate(state):
 
-        RAGAgent.logs += "---ASSESS GRADED DOCUMENTS---\n"
+        add_log("---ASSESS GRADED DOCUMENTS---")
         question = state["question"]
         web_search = state["web_search"]
         filtered_documents = state["documents"]
@@ -191,40 +198,40 @@ class RAGAgent():
         if web_search == "Yes":
             # All documents have been filtered check_relevance
             # We will re-generate a new query
-            RAGAgent.logs += "---DECISION: ALL DOCUMENTS ARE NOT RELEVANT TO QUESTION, INCLUDE WEB SEARCH---\n"
+            add_log("---DECISION: ALL DOCUMENTS ARE NOT RELEVANT TO QUESTION, INCLUDE WEB SEARCH---")
             return "websearch"
         else:
             # We have relevant documents, so generate answer
-            RAGAgent.logs += "---DECISION: GENERATE---\n"
+            add_log("---DECISION: GENERATE---")
             return "generate"
 
     def grade_generation_v_documents_and_question(state):
 
-        RAGAgent.logs += "---CHECK HALLUCINATIONS---\n"
+        add_log("---CHECK HALLUCINATIONS---")
         question = state["question"]
         documents = state["documents"]
         generation = state["generation"]
 
-        score = RAGAgent.hallucination_grader.invoke(
+        score = get_hallucination_grader.invoke(
             {"documents": documents, "generation": generation}
         )
         grade = score["score"]
 
         # Check hallucination
         if grade == "yes":
-            RAGAgent.logs += "---DECISION: GENERATION IS GROUNDED IN DOCUMENTS---\n"
+            add_log("---DECISION: GENERATION IS GROUNDED IN DOCUMENTS---")
             # Check question-answering
             print("---GRADE GENERATION vs QUESTION---")
-            score = RAGAgent.answer_grader.invoke({"question": question, "generation": generation})
+            score = get_answer_grader.invoke({"question": question, "generation": generation})
             grade = score["score"]
             if grade == "yes":
-                RAGAgent.logs += "---DECISION: GENERATION ADDRESSES QUESTION---\n"
+                add_log("---DECISION: GENERATION ADDRESSES QUESTION---")
                 return "useful"
             else:
-                RAGAgent.logs += "---DECISION: GENERATION DOES NOT ADDRESS QUESTION---\n"
+                add_log("---DECISION: GENERATION DOES NOT ADDRESS QUESTION---")
                 return "not useful"
         else:
-            RAGAgent.logs += "---DECISION: GENERATION IS NOT GROUNDED IN DOCUMENTS, RE-TRY---\n"
+            add_log("---DECISION: GENERATION IS NOT GROUNDED IN DOCUMENTS, RE-TRY---")
             return "not supported"
 
     workflow = StateGraph(GraphState)
