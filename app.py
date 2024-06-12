@@ -42,7 +42,8 @@ if "console_out" not in st.session_state:
     st.session_state["console_out"] = ""
 
 # Streamlit app initialization
-st.title("RAG AGENT - Multi PDF and Web Crawler")
+st.title("RAG AGENT - LLAMA3")
+st.markdown("Multi PDF and Web Search")
 st.markdown("Routing different retrieval approaches, Fallback to web search, Fix hallucinations or answers don’t address question")
 
 if 'messages' not in st.session_state:
