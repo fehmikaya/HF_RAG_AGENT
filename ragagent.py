@@ -126,12 +126,12 @@ class RAGAgent():
       web_search: str
       documents: List[str]
     
-    def retrieve(state):
-        add_log("---RETRIEVE---")
+    def retrieve(self, state):
+        self.add_log("---RETRIEVE---")
         question = state["question"]
 
         # Retrieval
-        documents = get_retriever.invoke(question)
+        documents = self.get_retriever.invoke(question)
         return {"documents": documents, "question": question}
 
     def generate(state):
