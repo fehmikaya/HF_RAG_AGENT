@@ -4,32 +4,18 @@ import time
 import shutil
 import os
 
-from customllama3 import CustomLlama3
 from ragagent import RAGAgent
 
-from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import PromptTemplate
-from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.document_loaders import PyPDFDirectoryLoader
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-
 
 icons = {"assistant": "robot.png", "user": "man-kddi.png"}
 DATA_DIR = "data"
 # Ensure data directory exists
 os.makedirs(DATA_DIR, exist_ok=True)
 
-# if not hasattr(st.session_state, 'agent'):
-#  st.session_state.agent = "None"
-
-
 def init_agent_with_docs():
 
     docs=[]
-
     if os.path.exists(DATA_DIR):
         try:
             pdf_loader = PyPDFDirectoryLoader(DATA_DIR)
@@ -56,9 +42,8 @@ if "console_out" not in st.session_state:
     st.session_state["console_out"] = ""
 
 # Streamlit app initialization
-st.title("RAG AGENT")
-st.markdown("RAG Agent with PDF and Web Search (Langchain & Langgraph)")
-st.markdown("Finds most related content from given sources with Sanity/Hallucination checks")
+st.title("RAG AGENT - Multi PDF and Web Crawler")
+st.markdown("Routing different retrieval approaches, Fallback to web search, Fix hallucinations or answers don’t address question")
 
 if 'messages' not in st.session_state:
     st.session_state.messages = [{'role': 'assistant', "content": "Hello! Upload PDF's and ask me anything about the content."}]
@@ -68,7 +53,7 @@ for message in st.session_state.messages:
         st.write(message['content'])
 
 with st.sidebar:
-    uploaded_files = st.file_uploader("Upload your PDF Files and Click on the Submit & Process Button", type="pdf", accept_multiple_files=True)
+    uploaded_files = st.file_uploader("Upload your PDF Files and Click Submit & Process", type="pdf", accept_multiple_files=True)
 
     if st.button("Submit & Process"):
         with st.spinner("Processing..."):
@@ -83,7 +68,7 @@ with st.sidebar:
             st.success("Done")
     st.text_area("Console", st.session_state["console_out"], height=250)
 
-user_prompt = st.chat_input("Ask me anything about the content of the PDF or Web Link:")
+user_prompt = st.chat_input("Ask me anything about the content of the PDF:")
 
 if user_prompt and uploaded_files:
     st.session_state.messages.append({'role': 'user', "content": user_prompt})
