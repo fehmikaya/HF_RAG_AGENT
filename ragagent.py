@@ -49,7 +49,7 @@ class RAGAgent():
         Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. 
         Use three sentences maximum and keep the answer concise <|eot_id|><|start_header_id|>user<|end_header_id|>
         Question: {question} 
-        Context: {context} 
+        Context: {document} 
         Answer: <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
         input_variables=["question", "document"],
     )
