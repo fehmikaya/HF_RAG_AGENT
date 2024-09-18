@@ -90,7 +90,7 @@ class RAGAgent():
         docs_list = [item for sublist in docs for item in sublist]
 
         text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-            chunk_size=1000, chunk_overlap=200
+            chunk_size=512, chunk_overlap=20
         )
         doc_splits = text_splitter.split_documents(docs_list)
         embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
