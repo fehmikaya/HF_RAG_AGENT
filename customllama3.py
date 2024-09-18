@@ -7,7 +7,7 @@ import requests
 class CustomLlama3(LLM):
     url: str = "https://api-inference.huggingface.co/models/meta-llama/Meta-Llama-3-8B-Instruct"
     bearer_token: str
-    max_new_tokens: int = 512
+    max_new_tokens: int = 1024
     top_p: float = 0.7
     temperature: float = 0.1
 
