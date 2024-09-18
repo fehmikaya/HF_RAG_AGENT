@@ -17,6 +17,7 @@ from typing_extensions import TypedDict
 from typing import List
 from langchain_core.documents import Document
 import os
+import re
 
 
 class RAGAgent():
@@ -94,12 +95,23 @@ class RAGAgent():
         )
         doc_splits = text_splitter.split_documents(docs_list)
         embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+
+        collection_name = re.sub(r'[^a-zA-Z0-9]', '', self.doc_splits[0].metadata.get('source'))
+
+        try:
+            # If it exists, delete the existing collection
+            Chroma()._client.delete_collection(name=collection_name)
+            print(f"Collection {collection_name} deleted successfully.")
+        except Exception as e:
+            pass
+
         # Add to vectorDB
         vectorstore = Chroma.from_documents(
-            documents=doc_splits,
-            collection_name="rag-chroma",
+            documents=self.doc_splits,
+            collection_name=collection_name,
             embedding=embedding_function,
         )
+        
         RAGAgent.retriever = vectorstore.as_retriever()
         RAGAgent.reset_chains()
         RAGAgent.logs=""
@@ -220,7 +232,7 @@ class RAGAgent():
                 RAGAgent.add_log("---DECISION: GENERATION DOES NOT ADDRESS QUESTION---")
                 return "not useful"
         else:
-            RAGAgent.add_log("---DECISION: GENERATION IS NOT GROUNDED IN DOCUMENTS, RE-TRY---")
+            RAGAgent.add_log("---DECISION: GENERATION IS NOT GROUNDED IN DOCUMENTS, ENDING---")
             return "not supported"
 
     workflow = StateGraph(GraphState)
@@ -248,7 +260,7 @@ class RAGAgent():
         "generate",
         grade_generation_v_documents_and_question,
         {
-            "not supported": "generate",
+            "not supported": END, # "generate",
             "useful": END,
             "not useful": "websearch",
         },
