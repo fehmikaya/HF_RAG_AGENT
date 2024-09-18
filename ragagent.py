@@ -107,7 +107,7 @@ class RAGAgent():
 
         # Add to vectorDB
         vectorstore = Chroma.from_documents(
-            documents=self.doc_splits,
+            documents=doc_splits,
             collection_name=collection_name,
             embedding=embedding_function,
         )
