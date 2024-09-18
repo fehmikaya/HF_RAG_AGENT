@@ -267,4 +267,4 @@ class RAGAgent():
     )
 
     # Compile
-    app = workflow.compile()  
+    app = workflow.compile() 
