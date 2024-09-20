@@ -1,8 +1,12 @@
 
 ###   RAG Agent with Langchain and Langgraph, Hallucination and Sanity Checks with Websearch 
 
-from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
+# from langchain_chroma import Chroma
+# from langchain_huggingface import HuggingFaceEmbeddings
+
+from langchain_community.vectorstores import Chroma
+from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.output_parsers import StrOutputParser
@@ -93,7 +97,9 @@ class RAGAgent():
             chunk_size=512, chunk_overlap=20
         )
         doc_splits = text_splitter.split_documents(docs_list)
-        embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        
+        # embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
 
         collection_name = "DEFAULT"
 
