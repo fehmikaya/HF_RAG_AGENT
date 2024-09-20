@@ -1,11 +1,9 @@
 
 ###   RAG Agent with Langchain and Langgraph, Hallucination and Sanity Checks with Websearch 
 
-# from langchain_chroma import Chroma
-# from langchain_huggingface import HuggingFaceEmbeddings
-
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+import chromadb
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.output_parsers import JsonOutputParser
@@ -98,25 +96,25 @@ class RAGAgent():
         )
         doc_splits = text_splitter.split_documents(docs_list)
         
-        # embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-        embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-
-        collection_name = "DEFAULT"
+        embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        collection_name = re.sub(r'[^a-zA-Z0-9]', '', self.doc_splits[0].metadata.get('source'))
+        client = chromadb.EphemeralClient()
 
         try:
             # If it exists, delete the existing collection
-            collection_name = re.sub(r'[^a-zA-Z0-9]', '', doc_splits[0].metadata.get('source'))
-            Chroma()._client.delete_collection(name=collection_name)
-            print(f"Collection {collection_name} deleted successfully.")
+            collection = client.get_collection(collection_name)
+            client.delete_collection(collection_name)
         except Exception as e:
             pass
 
         # Add to vectorDB
-        vectorstore = Chroma.from_documents(
-            documents=doc_splits,
+        vectorstore = Chroma(
+            client=client,
             collection_name=collection_name,
-            embedding=embedding_function,
+            embedding_function=embedding_function,
         )
+
+        vectorstore.add_documents(doc_splits)
         
         RAGAgent.retriever = vectorstore.as_retriever()
         RAGAgent.reset_chains()
