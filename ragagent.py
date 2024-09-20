@@ -95,10 +95,11 @@ class RAGAgent():
         doc_splits = text_splitter.split_documents(docs_list)
         embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-        collection_name = re.sub(r'[^a-zA-Z0-9]', '', doc_splits[0].metadata.get('source'))
+        collection_name = "DEFAULT"
 
         try:
             # If it exists, delete the existing collection
+            collection_name = re.sub(r'[^a-zA-Z0-9]', '', doc_splits[0].metadata.get('source'))
             Chroma()._client.delete_collection(name=collection_name)
             print(f"Collection {collection_name} deleted successfully.")
         except Exception as e:
