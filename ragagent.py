@@ -1,8 +1,8 @@
 
 ###   RAG Agent with Langchain and Langgraph, Hallucination and Sanity Checks with Websearch 
 
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.output_parsers import StrOutputParser
@@ -87,14 +87,13 @@ class RAGAgent():
         RAGAgent.answer_grader = RAGAgent.answer_grader_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()
        
     def __init__(self, docs):
-        print("init")
         docs_list = [item for sublist in docs for item in sublist]
 
         text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
             chunk_size=512, chunk_overlap=20
         )
         doc_splits = text_splitter.split_documents(docs_list)
-        embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+        embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
         collection_name = re.sub(r'[^a-zA-Z0-9]', '', doc_splits[0].metadata.get('source'))
 
