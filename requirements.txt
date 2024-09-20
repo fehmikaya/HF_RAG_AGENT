@@ -9,3 +9,4 @@ langchain-text-splitters
 tavily-python
 pypdf
 bs4
+sentence-transformers
