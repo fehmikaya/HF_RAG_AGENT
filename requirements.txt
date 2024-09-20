@@ -1,9 +1,9 @@
 langchain
-langchain_community
+langchain-chroma
+langchain_huggingface
 tiktoken
 chromadb
 langgraph
 langchain-text-splitters
 pypdf
-sentence-transformers
 bs4
