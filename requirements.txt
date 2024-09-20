@@ -1,6 +1,7 @@
 langchain
 langchain-chroma
 langchain_huggingface
+langchain_community
 tiktoken
 chromadb
 langgraph
