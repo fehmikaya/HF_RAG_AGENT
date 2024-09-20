@@ -1,4 +1,6 @@
 langchain
+langchain-chroma
+langchain_huggingface
 langchain_community
 tiktoken
 chromadb
@@ -7,4 +9,3 @@ langchain-text-splitters
 tavily-python
 pypdf
 bs4
-sentence-transformers
