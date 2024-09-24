@@ -179,7 +179,7 @@ class RAGAgent():
             score = RAGAgent.retrieval_grader.invoke(
                 {"question": question, "document": d.page_content}
             )
-            print("score: ",score
+            print("score: ",score)
             grade = score["score"]
             # Document relevant
             if grade.lower() == "yes":
