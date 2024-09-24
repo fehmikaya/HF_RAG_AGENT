@@ -280,7 +280,7 @@ class RAGAgent():
         {
             "not supported": END, # "generate",
             "useful": END,
-            "not useful": "websearch",
+            "not useful": END, #"websearch",
         },
     )
 
