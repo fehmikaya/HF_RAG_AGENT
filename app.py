@@ -60,7 +60,7 @@ with st.sidebar:
         with st.spinner("Processing..."):
             st.session_state["console_out"] = ""
             remove_old_files()  
-            for file in enumerate(uploaded_files):
+            for index, file in enumerate(uploaded_files):
                 # filepath = os.path.join(DATA_DIR, f"saved_pdf_{index}.pdf")
                 filepath = os.path.join(DATA_DIR, file.name)
                 with open(filepath, "wb") as f:
