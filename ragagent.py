@@ -104,7 +104,7 @@ class RAGAgent():
             # If it exists, delete the existing collection
             collection = client.get_collection(collection_name)
             client.delete_collection(collection_name)
-        except Exception as e
+        except:
             pass
 
         collection = client.create_collection(collection_name)
