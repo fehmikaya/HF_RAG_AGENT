@@ -98,6 +98,8 @@ class RAGAgent():
         
         embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         collection_name = re.sub(r'[^a-zA-Z0-9]', '', doc_splits[0].metadata.get('source'))
+
+        '''
         client = chromadb.EphemeralClient()
 
         try:
@@ -108,11 +110,15 @@ class RAGAgent():
             pass
 
         collection = client.create_collection(collection_name)
-        
+        '''
+
+        persistent_client = chromadb.PersistentClient()
+        collection = persistent_client.get_or_create_collection("collection_name")
+
         # Add to vectorDB
         vectorstore = Chroma(
-            client=client,
-            collection_name=collection_name,
+            client=persistent_client,
+            collection_name="collection_name",
             embedding_function=embedding_function,
         )
 
