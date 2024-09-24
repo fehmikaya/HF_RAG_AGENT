@@ -174,9 +174,12 @@ class RAGAgent():
         web_search = "Yes"
         
         for d in documents:
+            print("question: ",question)
+            print("document: ",d.page_content)
             score = RAGAgent.retrieval_grader.invoke(
                 {"question": question, "document": d.page_content}
             )
+            print("score: ",score
             grade = score["score"]
             # Document relevant
             if grade.lower() == "yes":
