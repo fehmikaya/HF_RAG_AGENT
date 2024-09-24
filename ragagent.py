@@ -98,6 +98,7 @@ class RAGAgent():
         
         embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         collection_name = re.sub(r'[^a-zA-Z0-9]', '', doc_splits[0].metadata.get('source'))
+        print(collection_name)
 
         '''
         client = chromadb.EphemeralClient()
@@ -114,9 +115,11 @@ class RAGAgent():
 
         persistent_client = chromadb.PersistentClient()
         if collection_name in [c.name for c in persistent_client.list_collections()]:
+            print("deleted: ",collection_name)
             persistent_client.delete_collection(collection_name)
             
         collection = persistent_client.create_collection(collection_name)
+        print("created: ",collection_name)
 
         # Add to vectorDB
         vectorstore = Chroma(
