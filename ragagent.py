@@ -113,12 +113,15 @@ class RAGAgent():
         '''
 
         persistent_client = chromadb.PersistentClient()
-        collection = persistent_client.get_or_create_collection("collection_name")
+        if collection_name in [c.name for c in persistent_client.list_collections()]:
+            persistent_client.delete_collection(collection_name)
+            
+        collection = persistent_client.create_collection(collection_name)
 
         # Add to vectorDB
         vectorstore = Chroma(
             client=persistent_client,
-            collection_name="collection_name",
+            collection_name=collection_name,
             embedding_function=embedding_function,
         )
 
