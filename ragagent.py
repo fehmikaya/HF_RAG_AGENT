@@ -113,7 +113,7 @@ class RAGAgent():
         collection = client.create_collection(collection_name)
         '''
 
-        persistent_client = chromadb.PersistentClient(path=CHROMADB_PATH, settings=Settings(allow_reset=True))
+        persistent_client = chromadb.PersistentClient(settings=Settings(allow_reset=True))
         persistent_client.reset()
         # if collection_name in [c.name for c in persistent_client.list_collections()]:
         #     print("deleted: ",collection_name)
