@@ -99,29 +99,15 @@ class RAGAgent():
         
         embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         collection_name = re.sub(r'[^a-zA-Z0-9]', '', doc_splits[0].metadata.get('source'))
-        print(collection_name)
-
-        '''
-        client = chromadb.EphemeralClient()
-
-        try:
-            # If it exists, delete the existing collection
-            collection = client.get_collection(collection_name)
-            client.delete_collection(collection_name)
-        except:
-            pass
-
-        collection = client.create_collection(collection_name)
-        '''
 
         persistent_client = chromadb.PersistentClient(settings=Settings(allow_reset=True))
-        persistent_client.reset()
-        # if collection_name in [c.name for c in persistent_client.list_collections()]:
-        #     print("deleted: ",collection_name)
-        #     persistent_client.delete_collection(collection_name)
+        # persistent_client.reset()
+        if collection_name in [c.name for c in persistent_client.list_collections()]:
+            print("\ndeleted: ",collection_name)
+            persistent_client.delete_collection(collection_name)
             
         collection = persistent_client.create_collection(collection_name)
-        print("created: ",collection_name)
+        print("\ncreated: ",collection_name)
 
         # Add to vectorDB
         vectorstore = Chroma(
@@ -176,12 +162,12 @@ class RAGAgent():
         web_search = "Yes"
         
         for d in documents:
-            print("question: ",question)
-            print("document: ",d.page_content)
+            print("\n---- question: ",question)
+            print("\n---- document: ",d.page_content)
             score = RAGAgent.retrieval_grader.invoke(
                 {"question": question, "document": d.page_content}
             )
-            print("score: ",score)
+            print("\n---- score: ",score)
             grade = score["score"]
             # Document relevant
             if grade.lower() == "yes":
