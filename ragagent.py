@@ -4,7 +4,7 @@
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 import chromadb
-from chromadb import Settings
+# from chromadb import Settings
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.output_parsers import JsonOutputParser
@@ -82,13 +82,19 @@ class RAGAgent():
         Here is the question: {question} <|eot_id|><|start_header_id|>assistant<|end_header_id|>""",
         input_variables=["generation", "question"],
     )
-
+    '''
     def reset_chains():
         RAGAgent.retrieval_grader = RAGAgent.retrieval_grader_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()
         RAGAgent.rag_chain = RAGAgent.answer_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | StrOutputParser()
         RAGAgent.hallucination_grader = RAGAgent.hallucination_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()
         RAGAgent.answer_grader = RAGAgent.answer_grader_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()
-       
+    '''
+
+    RAGAgent.retrieval_grader = RAGAgent.retrieval_grader_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()
+    RAGAgent.rag_chain = RAGAgent.answer_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | StrOutputParser()
+    RAGAgent.hallucination_grader = RAGAgent.hallucination_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()
+    RAGAgent.answer_grader = RAGAgent.answer_grader_prompt | CustomLlama3(bearer_token = RAGAgent.HF_TOKEN) | JsonOutputParser()
+    
     def __init__(self, docs):
         docs_list = [item for sublist in docs for item in sublist]
 
@@ -100,7 +106,8 @@ class RAGAgent():
         embedding_function = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         collection_name = re.sub(r'[^a-zA-Z0-9]', '', doc_splits[0].metadata.get('source'))
 
-        persistent_client = chromadb.PersistentClient(settings=Settings(allow_reset=True))
+        # persistent_client = chromadb.PersistentClient(settings=Settings(allow_reset=True))
+        persistent_client = chromadb.PersistentClient()
         # persistent_client.reset()
         if collection_name in [c.name for c in persistent_client.list_collections()]:
             print("\ndeleted: ",collection_name)
@@ -119,7 +126,7 @@ class RAGAgent():
         vectorstore.add_documents(doc_splits)
         
         RAGAgent.retriever = vectorstore.as_retriever()
-        RAGAgent.reset_chains()
+        # RAGAgent.reset_chains()
         RAGAgent.logs=""
 
     def add_log(log):
@@ -231,7 +238,6 @@ class RAGAgent():
         if grade == "yes":
             RAGAgent.add_log("---DECISION: GENERATION IS GROUNDED IN DOCUMENTS---")
             # Check question-answering
-            print("---GRADE GENERATION vs QUESTION---")
             score = RAGAgent.answer_grader.invoke({"question": question, "generation": generation})
             grade = score["score"]
             if grade == "yes":
