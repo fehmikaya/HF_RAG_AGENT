@@ -4,7 +4,6 @@
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 import chromadb
-# from chromadb import Settings
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.output_parsers import JsonOutputParser
@@ -103,11 +102,11 @@ class RAGAgent():
         persistent_client = chromadb.PersistentClient()
 
         if collection_name in [c.name for c in persistent_client.list_collections()]:
-            print("\ndeleted: ",collection_name)
+            print("\nDELETED COLLECTION: ",collection_name)
             persistent_client.delete_collection(collection_name)
             
         persistent_client.create_collection(collection_name)
-        print("\ncreated: ",collection_name)
+        print("\nCREATED COLLECTION: ",collection_name)
 
         # Add to vectorDB
         vectorstore = Chroma(
@@ -160,14 +159,15 @@ class RAGAgent():
         # Score each doc
         filtered_docs = []
         web_search = "Yes"
+
+        print("\n---- QUESTION: ",question)
         
         for d in documents:
-            print("\n---- question: ",question)
-            print("\n---- document: ",d.page_content)
+            print("\n---- DOCUMENT: ",d.page_content)
             score = RAGAgent.retrieval_grader.invoke(
                 {"question": question, "document": d.page_content}
             )
-            print("\n---- score: ",score)
+            print("\n---- SCORE: ",score)
             grade = score["score"]
             # Document relevant
             if grade.lower() == "yes":
@@ -183,7 +183,7 @@ class RAGAgent():
 
     def web_search(state):
 
-        RAGAgent.add_log("---WEB SEARCH---")
+        RAGAgent.add_log("---WEB SEARCH RUNNING---")
         question = state["question"]
         documents = state["documents"]
 
@@ -208,11 +208,11 @@ class RAGAgent():
         if web_search == "Yes":
             # All documents have been filtered check_relevance
             # We will re-generate a new query
-            RAGAgent.add_log("---DECISION: ALL DOCUMENTS ARE NOT RELEVANT TO QUESTION, INCLUDE WEB SEARCH---")
+            RAGAgent.add_log("---DOCUMENTS NOT RELEVANT, INCLUDE WEB SEARCH---")
             return "websearch"
         else:
             # We have relevant documents, so generate answer
-            RAGAgent.add_log("---DECISION: GENERATE---")
+            RAGAgent.add_log("---DOCUMENTS NOT RELEVANT, GENERATE---")
             return "generate"
 
     def grade_generation_v_documents_and_question(state):
@@ -229,19 +229,21 @@ class RAGAgent():
 
         # Check hallucination
         if grade == "yes":
-            RAGAgent.add_log("---DECISION: GENERATION IS GROUNDED IN DOCUMENTS---")
+            RAGAgent.add_log("---GENERATION IS GROUNDED IN DOCUMENTS---")
             # Check question-answering
             score = RAGAgent.answer_grader.invoke({"question": question, "generation": generation})
             grade = score["score"]
             if grade == "yes":
-                RAGAgent.add_log("---DECISION: GENERATION ADDRESSES QUESTION---")
+                RAGAgent.add_log("---GENERATION ADDRESSES QUESTION---")
                 return "useful"
             else:
-                RAGAgent.add_log("---DECISION: GENERATION DOES NOT ADDRESS QUESTION---")
+                RAGAgent.add_log("---GENERATION DOES NOT ADDRESS QUESTION---")
                 return "not useful"
         else:
-            RAGAgent.add_log("---DECISION: GENERATION IS NOT GROUNDED IN DOCUMENTS, ENDING---")
+            RAGAgent.add_log("---GENERATION IS NOT GROUNDED IN DOCUMENTS---")
             return "not supported"
+            
+        RAGAgent.add_log("\n--------END--------\n")
 
     workflow = StateGraph(GraphState)
 
