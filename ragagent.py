@@ -212,7 +212,7 @@ class RAGAgent():
             return "websearch"
         else:
             # We have relevant documents, so generate answer
-            RAGAgent.add_log("---DOCUMENTS NOT RELEVANT, GENERATE---")
+            RAGAgent.add_log("---DOCUMENTS RELEVANT, GENERATE---")
             return "generate"
 
     def grade_generation_v_documents_and_question(state):
@@ -226,6 +226,7 @@ class RAGAgent():
             {"documents": documents, "generation": generation}
         )
         grade = score["score"]
+        result = ""
 
         # Check hallucination
         if grade == "yes":
@@ -235,15 +236,16 @@ class RAGAgent():
             grade = score["score"]
             if grade == "yes":
                 RAGAgent.add_log("---GENERATION ADDRESSES QUESTION---")
-                return "useful"
+                result = "useful"
             else:
                 RAGAgent.add_log("---GENERATION DOES NOT ADDRESS QUESTION---")
-                return "not useful"
+                result = "not useful"
         else:
             RAGAgent.add_log("---GENERATION IS NOT GROUNDED IN DOCUMENTS---")
-            return "not supported"
+            result = "not supported"
             
         RAGAgent.add_log("\n--------END--------\n")
+        return result
 
     workflow = StateGraph(GraphState)
 
